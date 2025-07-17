@@ -1,5 +1,7 @@
 OUTPUT_EXECUTABLE_NAME := "hextrade";
-BUILD_OUTPUT_DIRECTORY := "build";
+BUILD_OUTPUT_DIRECTORY := "build/";
+RAYLIB_LIBRARY_PATH := "external/raylib-5.5_win64_msvc16/lib/raylibdll.lib";
+RAYLIB_DLL_PATH := "external/raylib-5.5_win64_msvc16/lib/raylib.dll";
 
 #import "Basic";
 #import "Compiler";
@@ -20,11 +22,15 @@ BUILD_OUTPUT_DIRECTORY := "build";
 
   options.output_path = BUILD_OUTPUT_DIRECTORY;
   options.output_executable_name = OUTPUT_EXECUTABLE_NAME;
+  options.additional_linker_arguments = .[RAYLIB_LIBRARY_PATH];
 
   set_build_options(options, w);
 
   compiler_begin_intercept(w);
   add_build_file("src/main.jai", w);
+
+  // Copy raylib DLL to the build output directory.
+  copy_file(RAYLIB_DLL_PATH, tprint("%/raylib.dll", BUILD_OUTPUT_DIRECTORY));
 
   while true {
     message := compiler_wait_for_message();
