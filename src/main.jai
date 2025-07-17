@@ -1,5 +1,7 @@
 #import "Basic";
 
+raylib :: #library "../external/raylib-5.5_win64_msvc16/lib/raylib";
+
 // Foreign types
 Color :: struct {r, g, b, a: u8; };
 
@@ -14,8 +16,6 @@ ClearBackground :: (color: Color) #c_call #foreign raylib;
 
 RAYWHITE : Color = .{245, 245, 245, 255};
 
-raylib :: #library "../external/raylib-5.5_win64_msvc16/lib/raylib";
-
 WIDTH :: 1280;
 HEIGHT :: 720;
 TITLE :: "HexTrade";
@@ -29,14 +29,13 @@ main :: () {
 
   while !WindowShouldClose() {
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+    {
+      ClearBackground(RAYWHITE);
 
-    // Here you would normally draw your game content.
-    // For now, we just clear the screen with a white background.
-
+      // Here you would normally draw your game content.
+      // For now, we just clear the screen with a white background.
+    }
     EndDrawing();
-
-  }
-
+  } // End of main loop
   CloseWindow();
 }

@@ -2,4 +2,6 @@
 build/
 external/
 tags
+*.vim
+*.rdbg
 
