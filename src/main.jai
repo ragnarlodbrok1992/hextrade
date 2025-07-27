@@ -66,19 +66,52 @@ Font :: struct {
 };
 
 // Foreign function declarations
-InitWindow :: (width: s64, height: s64, title: string) #c_call #foreign raylib;
+InitWindow :: (width: s64, height: s64, title: *u8) #c_call #foreign raylib;
 SetTargetFPS :: (fps: s64) #c_call #foreign raylib;
 WindowShouldClose :: () -> bool #c_call #foreign raylib;
 CloseWindow :: () #c_call #foreign raylib;
+
 BeginDrawing :: () #c_call #foreign raylib;
 EndDrawing :: () #c_call #foreign raylib;
+
+BeginMode3D :: (camera: Camera3D) #c_call #foreign raylib;
+EndMode3D :: () #c_call #foreign raylib;
+
+UpdateCamera :: (camera: *Camera3D, mode: CameraMode) #c_call #foreign raylib;
+UpdateCameraPro :: (camera: *Camera3D, movement: Vector3, rotation: Vector3, zoom: float) #c_call #foreign raylib;
+
 ClearBackground :: (color: Color) #c_call #foreign raylib;
-DrawText :: (text: *u8, pos_x: s64, pos_y: s64, font_size: s64, color: Color) #c_call #foreign raylib;
-DrawTextEx :: (font: Font, text: *u8, position: Vector2, font_size: float, spacing: float, tint: Color) #c_call #foreign raylib;
+
+DrawCube :: (position: Vector3, width: float, height: float, length: float, color: Color) #c_call #foreign raylib;
+DrawCubeWires :: (position: Vector3, width: float, height: float, length: float, color: Color) #c_call #foreign raylib;
+DrawGrid :: (slices: s32, spacing: float) #c_call #foreign raylib;
+
 LoadFont :: (file_name: *u8) -> Font #c_call #foreign raylib;
 LoadFontEx :: (file_name: *u8, font_size: s64, chars: *s64, chars_count: s64) -> Font #c_call #foreign raylib;
 UnloadFont :: (font: Font) #c_call #foreign raylib;
+
+DrawText :: (text: *u8, pos_x: s64, pos_y: s64, font_size: s64, color: Color) #c_call #foreign raylib;
+DrawTextEx :: (font: Font, text: *u8, position: Vector2, font_size: float, spacing: float, tint: Color) #c_call #foreign raylib;
 MeasureTextEx :: (font: Font, text: *u8, font_size: float, spacing: float) -> Vector2 #c_call #foreign raylib;
+
+CameraMode :: enum s32 {
+  CAMERA_CUSTOM :: 0;
+  CAMERA_FREE;
+  CAMERA_ORBITAL;
+  CAMERA_FIRST_PERSON;
+  CAMERA_THIRD_PERSON;
+};
+
+CameraProjection :: enum s32 {
+  CAMERA_PERSPECTIVE :: 0;
+  CAMERA_ORTHOGRAPHIC;
+};
+
+Camera3D :: struct {
+  position, target, up: Vector3;
+  fovy: float;
+  projections: CameraProjection;
+};
 
 // Main background color
 RAYWHITE : Color = .{245, 245, 245, 255};
@@ -86,6 +119,9 @@ RAYWHITE : Color = .{245, 245, 245, 255};
 // Some constant colors
 DARKGRAY : Color = .{80, 80, 80, 255};
 BLACK : Color = .{0, 0, 0, 255};
+RED : Color = .{255, 0, 0, 255};
+MAROON : Color = .{128, 0, 0, 255};
+PURPLE : Color = .{128, 0, 128, 255};
 
 WIDTH :: 1280;
 HEIGHT :: 720;
@@ -96,9 +132,9 @@ main :: () {
   print("Hello, HexTrade!\n");
 
   // Allocations of strings
-  welcome_text: *u8 = to_c_string(WELCOME_TEXT);
+  // welcome_text: *u8 = to_c_string(WELCOME_TEXT);
 
-  InitWindow(WIDTH, HEIGHT, TITLE);
+  InitWindow(WIDTH, HEIGHT, TITLE.data);
   defer CloseWindow();
 
   // Changing font in raylib
@@ -107,24 +143,59 @@ main :: () {
   defer UnloadFont(new_font); // Free the font if necessary
   font_size: float = cast(float) new_font.base_size;
   new_font_position: Vector2 = .{
-    x = WIDTH / 2.0 - MeasureTextEx(new_font, welcome_text, cast(float) new_font.base_size, 0).x / 2.0,
-    y = HEIGHT / 2.0 - new_font.base_size / 2.0,
+    // x = WIDTH / 2.0 - MeasureTextEx(new_font, welcome_text, cast(float) new_font.base_size, 0).x / 2.0,
+    // y = HEIGHT / 2.0 - new_font.base_size / 2.0,
+    x = 10.0,
+    y = 10.0,
   };
+
+  camera : Camera3D = .{
+    position = .{10.0, 10.0, 10.0},
+    target = .{0.0, 0.0, 0.0},
+    up = .{0.0, 1.0, 0.0},
+    fovy = 45.0,
+    projections = .CAMERA_PERSPECTIVE,
+  };
+
+  // TODO: move it to some struct
+  camera_movement : Vector3 = .{0.0, 0.0, 0.0};
+  camera_rotation : Vector3 = .{0.0, 0.0, 0.0};
+  camera_zoom : float = 0.0;
+
+  hello_world_cube: Vector3 = .{0.0, 0.0, 0.0};
 
   SetTargetFPS(60);
 
   while !WindowShouldClose() {
-    BeginDrawing();
-    defer EndDrawing();
+    // Input checking
+
+    UpdateCameraPro(*camera, camera_movement, camera_rotation, camera_zoom);
+
     {
+      BeginDrawing();
+      defer EndDrawing();
       ClearBackground(RAYWHITE);
+
+      {
+        BeginMode3D(camera);
+        defer EndMode3D();
+        // 3D rendering code goes here
+
+        // DrawCube(cubePosition, 2.0f, 2.0f, 2.0f, RED);
+        // DrawCubeWires(cubePosition, 2.0f, 2.0f, 2.0f, MAROON);
+        // DrawGrid(10, 1.0f);
+
+        DrawCube(hello_world_cube, 1.5, 1.5, 1.5, RED);
+        DrawCubeWires(hello_world_cube, 1.5, 1.5, 1.5, MAROON);
+        DrawGrid(100, 1.0);
+      }
+      // Rendering 2D stuff
 
       // Here you would normally draw your game content.
       // For now, we just clear the screen with a white background.
 
-      // DrawText(welcome_text, 10, 10, 20, DARKGRAY);
-      DrawTextEx(new_font, welcome_text, new_font_position,
-      font_size, 2, BLACK);
+      DrawTextEx(new_font, WELCOME_TEXT.data, new_font_position,
+      font_size, 0, DARKGRAY);
     }
   } // End of main loop
 }
