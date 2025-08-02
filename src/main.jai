@@ -284,6 +284,10 @@ Vec3Subtract :: (a: Vector3, b: Vector3) -> Vector3 {
   return .{a.x - b.x, a.y - b.y, a.z - b.z};
 }
 
+GetCameraFront :: (camera: Camera3D) -> Vector3 {
+  return Vec3Normalize(Vec3Subtract(camera.target, camera.position));
+}
+
 main :: () {
   print("Hello, HexTrade!\n");
 
@@ -326,7 +330,7 @@ main :: () {
     // Input checking
 
     // Get camera front vector
-    camera_front : Vector3 = Vec3Normalize(Vec3Subtract(camera.target, camera.position));
+    camera_front : Vector3 = GetCameraFront(camera);
     DrawTextEx(new_font, sprint("Camera front: %, %, %", camera_front.x, camera_front.y, camera_front.z).data,
       .{10.0, HEIGHT - 90.0}, font_size, 0, DARKGRAY);
     DrawTextEx(new_font, sprint("Camera position: %, %, %", camera.position.x, camera.position.y, camera.position.z).data,
@@ -341,7 +345,13 @@ main :: () {
     // Check for qweasd keys to move the camera
     if IsKeyPressed(.KEY_Q) camera_movement.z = 0.1;
     if IsKeyPressed(.KEY_E) camera_movement.z = -0.1;
-    if IsKeyPressed(.KEY_W) camera_movement.x = 0.1;
+
+    if IsKeyPressed(.KEY_W) {
+      camera.position.x += 0.1 * camera_front.x;
+      camera.position.y += 0.1 * camera_front.y;
+      camera.position.z += 0.1 * camera_front.z;
+    }
+
     if IsKeyPressed(.KEY_S) camera_movement.x = -0.1;
     if IsKeyPressed(.KEY_A) camera_movement.y = -0.1;
     if IsKeyPressed(.KEY_D) camera_movement.y = 0.1;
@@ -349,7 +359,12 @@ main :: () {
     // Check for those keys released
     if IsKeyReleased(.KEY_Q) camera_movement.z = 0.0;
     if IsKeyReleased(.KEY_E) camera_movement.z = 0.0;
-    if IsKeyReleased(.KEY_W) camera_movement.x = 0.0;
+
+    if IsKeyReleased(.KEY_W) {
+      camera_movement.x = 0.0;
+      camera_movement.y = 0.0;
+      camera_movement.z = 0.0;
+    }
     if IsKeyReleased(.KEY_S) camera_movement.x = 0.0;
     if IsKeyReleased(.KEY_A) camera_movement.y = 0.0;
     if IsKeyReleased(.KEY_D) camera_movement.y = 0.0;
